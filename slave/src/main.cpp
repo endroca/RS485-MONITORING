@@ -2,18 +2,18 @@
 #include <HardwareSerial.h>
 #include <ArduinoJson.h>
 
-uint8_t TRANSMITER_PIN = 5;
-uint8_t SENSOR_PIN = 34;
-uint8_t LED_RECEIVED_PIN = 2;
+const uint8_t TRANSMITER_PIN = 5;
+const uint8_t SENSOR_PIN = 34;
+const uint8_t LED_RECEIVED_PIN = 2;
 
-const char* DEVICE_ID = "S1";
+const char *DEVICE_ID = "S1";
 HardwareSerial RS485(1);
 
-bool transmiter = false;
+void transmitter(uint8_t action);
 
 void setup(){
 	Serial.begin(9600);
-	RS485.begin(115200, SERIAL_8N1, 16, 17);
+	RS485.begin(4000000, SERIAL_8N1, 16, 17);
 
 	pinMode(TRANSMITER_PIN, OUTPUT);
 	pinMode(LED_RECEIVED_PIN, OUTPUT);
@@ -33,10 +33,11 @@ void loop(){
 			Serial.println(error.c_str());
 		}else{
 			const char* addressee = doc["addressee"];
+			const uint8_t action = doc["action"];
 
 			if(strcmp(addressee,DEVICE_ID) == 0){
-				delay(500);
-				transmiter = true;
+				delay(2);
+				transmitter(action);
 			}
 
 			Serial.print("Receveid: ");
@@ -46,24 +47,31 @@ void loop(){
 	
 		digitalWrite(LED_RECEIVED_PIN, LOW);
 	}
+}
 
-	if(transmiter){
-		digitalWrite(TRANSMITER_PIN, HIGH);
+void transmitter(uint8_t action){
+	digitalWrite(TRANSMITER_PIN, HIGH);
 
-		StaticJsonDocument<200> doc;
-		doc["id"] = DEVICE_ID;
-		doc["sensor"] = analogRead(SENSOR_PIN);
-		serializeJson(doc, RS485);
+	StaticJsonDocument<200> doc;
+	doc["id"] = DEVICE_ID;
+
+	switch (action){
+		case 1:
+			doc["sensor"] = analogRead(SENSOR_PIN);
+			break;
 		
-		Serial.print("Send: ");
-		serializeJson(doc, Serial);
-		Serial.println();
-
-		transmiter = false;
-		
-		delay(10);
-		digitalWrite(TRANSMITER_PIN, LOW);
+		default:
+			break;
 	}
+
+	serializeJson(doc, RS485);
+
+	Serial.print("Send: ");
+	serializeJson(doc, Serial);
+	Serial.println();
+	
+	delay(1);
+	digitalWrite(TRANSMITER_PIN, LOW);	
 }
 
 /*

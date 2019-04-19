@@ -2,7 +2,7 @@
 #include <HardwareSerial.h>
 #include <ArduinoJson.h>
 
-#define MAX_NUMBER_OF_SLAVES 2
+const uint8_t MAX_NUMBER_OF_SLAVES = 2;
 
 const uint8_t TRANSMITER_PIN = 5;
 const uint8_t SENSOR_PIN = 34;
@@ -13,6 +13,7 @@ HardwareSerial RS485(1);
 
 char *DEVICES[MAX_NUMBER_OF_SLAVES] = {};
 
+bool firstOperation = true;
 bool transmiter = false;
 bool waitingReceipt = false;
 unsigned long timeNow = 0;
@@ -22,6 +23,7 @@ unsigned int attempts = 0;
 
 
 void transmitter(char* addressee, uint8_t action);
+void scanDevices();
 
 void setup(){
 	Serial.begin(115200);
@@ -35,6 +37,15 @@ void setup(){
 }
 
 void loop(){
+	/*
+	if(firstOperation){
+		scanDevices();
+
+		firstOperation = false;
+		Serial.println("FInalizado");
+	}
+	*/
+	
 	if (RS485.available() > 0){
 		digitalWrite(LED_RECEIVED_PIN, HIGH);
 
@@ -55,10 +66,11 @@ void loop(){
 		}
 
 		waitingReceipt = false;
+		delay(10);
 		digitalWrite(LED_RECEIVED_PIN, LOW);
 	}
 
-	if (millis() - timeNow > 1000){
+	/*if (millis() - timeNow > 1000){
 		if (waitingReceipt == false){
 			transmitter("S1",1);
 		}
@@ -67,27 +79,40 @@ void loop(){
 		}
 
 		timeNow = millis();
-	}
+	}*/
+	
+	//if (waitingReceipt == false){
+		delay(50);
+		transmitter("S1",1);
+	//}
+	//else{
+	//	Serial.println("Waiting...");
+	//}
 }
-
+/*
 void scanDevices(){
 	Serial.println("Scan:");
 
 	uint8_t index = 0;
 
-	for(uint8_t i = 0; i < MAX_NUMBER_OF_SLAVES; i++){
-		char *addressee = "S";
-		addressee += i;
+	for(uint8_t i = 1; i <= MAX_NUMBER_OF_SLAVES; i++){
+		String addresseeTMP = "S";
+		addresseeTMP = addresseeTMP + i;
 
+		char addressee[addresseeTMP.length() + 1];
+
+		addresseeTMP.toCharArray(addressee, addresseeTMP.length() + 1);
+		
 		delay(2);
 		transmitter(addressee, 0);
 
 		bool received = true;
+		timeNow = millis();
 		while(RS485.available() == 0){
 			if(millis() - timeNow > 100){
 				received = false;
+				break;
 			}
-			timeNow = millis();
 		}
 
 		if(received){
@@ -98,17 +123,19 @@ void scanDevices(){
 				Serial.println(error.c_str());
 			}
 			else{
-				DEVICES[index] = doc["id"];
+				const char* id = doc["id"];
+				//strcpy(DEVICES[index], id);
+
 				index++;
 
 				Serial.print("ID: ");
-				Serial.println(DEVICES[index]);
+				Serial.println(id);
 			}			
 		}
 
 	}
 
-}
+}*/
 
 void transmitter(char* addressee, uint8_t action){
 	digitalWrite(TRANSMITER_PIN, HIGH);

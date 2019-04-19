@@ -1,0 +1,6 @@
+{
+    "terminal.integrated.env.linux": {
+        "PATH": "/home/endroca/.platformio/penv/bin:/home/endroca/.platformio/penv:/home/endroca/.local/bin:/home/endroca/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/opt/netbeans/bin/",
+        "PLATFORMIO_CALLER": "vscode"
+    }
+}

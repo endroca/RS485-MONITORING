@@ -12,8 +12,8 @@ HardwareSerial RS485(1);
 void transmitter(uint8_t action);
 
 void setup(){
-	Serial.begin(9600);
-	RS485.begin(4000000, SERIAL_8N1, 16, 17);
+	Serial.begin(115200);
+	RS485.begin(1000000, SERIAL_8N1, 16, 17);
 
 	pinMode(TRANSMITER_PIN, OUTPUT);
 	pinMode(LED_RECEIVED_PIN, OUTPUT);
@@ -36,13 +36,13 @@ void loop(){
 			const uint8_t action = doc["action"];
 
 			if(strcmp(addressee,DEVICE_ID) == 0){
-				delay(2);
 				transmitter(action);
 			}
-
+			/*
 			Serial.print("Receveid: ");
 			serializeJson(doc, Serial);
 			Serial.println();
+			*/
 		}
 	
 		digitalWrite(LED_RECEIVED_PIN, LOW);
@@ -65,12 +65,14 @@ void transmitter(uint8_t action){
 	}
 
 	serializeJson(doc, RS485);
-
+	RS485.flush();
+	
+	/*
 	Serial.print("Send: ");
 	serializeJson(doc, Serial);
 	Serial.println();
-	
-	delay(1);
+	*/
+
 	digitalWrite(TRANSMITER_PIN, LOW);	
 }
 

@@ -2,32 +2,32 @@
 #include <HardwareSerial.h>
 #include <ArduinoJson.h>
 
-const uint8_t MAX_NUMBER_OF_SLAVES = 2;
+static const uint8_t MAX_NUMBER_OF_SLAVES = 2;
 
-const uint8_t TRANSMITER_PIN = 5;
-const uint8_t SENSOR_PIN = 34;
-const uint8_t LED_RECEIVED_PIN = 2;
+static const uint8_t TRANSMITER_PIN = 5;
+static const uint8_t SENSOR_PIN = 34;
+static const uint8_t LED_RECEIVED_PIN = 2;
 
-const char *DEVICE_ID = "M1";
+static const char *DEVICE_ID = "M1";
+
 HardwareSerial RS485(1);
 
-char *DEVICES[MAX_NUMBER_OF_SLAVES] = {};
+char *DEVICES[MAX_NUMBER_OF_SLAVES];
+uint8_t DEVICES_ONLINE = 0;
 
-bool firstOperation = true;
-bool transmiter = false;
-bool waitingReceipt = false;
 unsigned long timeNow = 0;
+unsigned long timeTransmiter = 0;
 
-unsigned int timeOut = 100;
-unsigned int attempts = 0;
+static const unsigned int timeOut = 10;
 
 
 void transmitter(char* addressee, uint8_t action);
 void scanDevices();
+void readRS485();
 
 void setup(){
-	Serial.begin(115200);
-	RS485.begin(4000000, SERIAL_8N1, 16, 17);
+	Serial.begin(500000);
+	RS485.begin(1000000, SERIAL_8N1, 16, 17);
 
 	pinMode(TRANSMITER_PIN, OUTPUT);
 	pinMode(LED_RECEIVED_PIN, OUTPUT);
@@ -37,63 +37,64 @@ void setup(){
 }
 
 void loop(){
-	/*
-	if(firstOperation){
-		scanDevices();
-
-		firstOperation = false;
-		Serial.println("FInalizado");
-	}
-	*/
 	
-	if (RS485.available() > 0){
-		digitalWrite(LED_RECEIVED_PIN, HIGH);
+	if(Serial.available() > 0){
+		//StaticJsonDocument<200> doc;
+		//DeserializationError error = deserializeJson(doc, Serial);		
+	}
+	
+	if(DEVICES_ONLINE == 0){
+		scanDevices();
+	}else{
+		for(uint8_t i = 0; i < DEVICES_ONLINE;i++){
+			transmitter(DEVICES[i], 1);
+
+			bool received = true;
+			timeNow = millis();
+			while(RS485.available() == 0){
+				if(millis() - timeNow > timeOut){
+					received = false;
+					break;
+				}
+			}
+
+			if(received){
+				readRS485();
+			}
+
+			delay(500);
+		}
+	}
+}
+
+void readRS485(){
+	digitalWrite(LED_RECEIVED_PIN, HIGH);	
+	StaticJsonDocument<200> doc;
+	DeserializationError error = deserializeJson(doc, RS485);	
+	if (error){
+		Serial.println(error.c_str());
+	}
+	else{
+		unsigned long PING = millis() - timeTransmiter;	
+		const char *slaveID = doc["id"];
+		uint16_t sensor = doc["sensor"];	
 
 		StaticJsonDocument<200> doc;
-		DeserializationError error = deserializeJson(doc, RS485);
+		doc["id"] = slaveID;
+		doc["sensor"] = sensor;
+		doc["ping"] = PING;
 
-		if (error){
-			Serial.println(error.c_str());
-		}
-		else{
-			const char *slaveID = doc["id"];
-			uint16_t sensor = doc["sensor"];
+		serializeJson(doc, Serial);
+		Serial.write('\n');
+		Serial.flush();
+	}	
 
-			Serial.print("ID: ");
-			Serial.println(slaveID);
-			Serial.print("sensor: ");
-			Serial.println(sensor);
-		}
-
-		waitingReceipt = false;
-		delay(10);
-		digitalWrite(LED_RECEIVED_PIN, LOW);
-	}
-
-	/*if (millis() - timeNow > 1000){
-		if (waitingReceipt == false){
-			transmitter("S1",1);
-		}
-		else{
-			Serial.println("Waiting...");
-		}
-
-		timeNow = millis();
-	}*/
-	
-	//if (waitingReceipt == false){
-		delay(50);
-		transmitter("S1",1);
-	//}
-	//else{
-	//	Serial.println("Waiting...");
-	//}
+	digitalWrite(LED_RECEIVED_PIN, LOW);
 }
-/*
-void scanDevices(){
-	Serial.println("Scan:");
 
+void scanDevices(){
 	uint8_t index = 0;
+	DEVICES_ONLINE = 0;
 
 	for(uint8_t i = 1; i <= MAX_NUMBER_OF_SLAVES; i++){
 		String addresseeTMP = "S";
@@ -103,7 +104,6 @@ void scanDevices(){
 
 		addresseeTMP.toCharArray(addressee, addresseeTMP.length() + 1);
 		
-		delay(2);
 		transmitter(addressee, 0);
 
 		bool received = true;
@@ -124,18 +124,16 @@ void scanDevices(){
 			}
 			else{
 				const char* id = doc["id"];
-				//strcpy(DEVICES[index], id);
+				DEVICES[index] = strdup(id);
 
 				index++;
-
-				Serial.print("ID: ");
-				Serial.println(id);
+				DEVICES_ONLINE++;
 			}			
 		}
 
 	}
 
-}*/
+}
 
 void transmitter(char* addressee, uint8_t action){
 	digitalWrite(TRANSMITER_PIN, HIGH);
@@ -144,15 +142,15 @@ void transmitter(char* addressee, uint8_t action){
 	doc["addressee"] = addressee;
 	doc["action"] = action;
 	serializeJson(doc, RS485);
-
+	RS485.flush();
+	timeTransmiter = millis();
+	
+	/*
 	Serial.print("Send: ");
 	serializeJson(doc, Serial);
 	Serial.println();
-
-	transmiter = false;
-	waitingReceipt = true;
-
-	delay(1);
+	*/
+	
 	digitalWrite(TRANSMITER_PIN, LOW);
 }
 

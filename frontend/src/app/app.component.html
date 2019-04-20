@@ -1,0 +1,96 @@
+<mdb-navbar SideClass="navbar navbar-expand-lg navbar-dark elegant-color ie-nav" [containerInside]="false">
+	<mdb-navbar-brand>
+		<a class="logo navbar-brand" href="#"><strong>RS485 - View</strong></a>
+	</mdb-navbar-brand>
+	<links>
+		<ul class="navbar-nav mr-auto">
+			<li class="nav-item active waves-light" mdbWavesEffect>
+				<a class="nav-link">Home <span class="sr-only">(current)</span></a>
+			</li>
+			
+			<li class="nav-item waves-light" mdbWavesEffect>
+				<a class="nav-link">Taxa de amostragem</a>
+			</li>
+			<!--
+			<li class="nav-item waves-light" mdbWavesEffect>
+				<a class="nav-link">Pricing</a>
+			</li>
+			<li class="nav-item waves-light" mdbWavesEffect>
+				<a class="nav-link">Opinions</a>
+			</li>
+			-->
+		</ul>
+		<!--
+		<ul class="navbar-nav nav-flex-icons">
+			<li class="nav-item waves-light" mdbWavesEffect>
+				<a class="nav-link"><i class="fab fa-facebook-f"></i></a>
+			</li>
+			<li class="nav-item waves-light" mdbWavesEffect>
+				<a class="nav-link"><i class="fab fa-twitter"></i></a>
+			</li>
+			<li class="nav-item waves-light" mdbWavesEffect>
+				<a class="nav-link"><i class="fab fa-instagram"></i></a>
+			</li>
+		</ul>
+		-->
+	</links>
+</mdb-navbar>
+<!-- Main -->
+<main>
+	<div class="container-fluid">
+		<div class="pt-3"></div>
+		<div class="row">
+			<div class="col-md-6">
+				<mdb-card>
+					<mdb-card-body>
+						<mdb-card-title>
+							<h4>Sensor 1</h4>
+						</mdb-card-title>
+						<mdb-card-text>
+							<div class="row">
+								<div class="col-md-12">
+									<div class="chart">
+										<ngx-charts-line-chart [view]="view" [scheme]="lineChartColorScheme" [results]="chartDataS1"
+											[gradient]="lineChartGradient" [xAxis]="lineChartShowXAxis"
+											[yAxis]="lineChartShowYAxis" [legend]="lineChartShowLegend"
+											[showXAxisLabel]="lineChartShowXAxisLabel" [showYAxisLabel]="lineChartShowYAxisLabel"
+											[xAxisLabel]="lineChartXAxisLabel" [yAxisLabel]="lineChartYAxisLabel"
+											[autoScale]="lineChartAutoScale" [timeline]="timeline" [animations]="false"
+											[curve]="lineChartLineInterpolation" (select)="onSelect($event)">
+										</ngx-charts-line-chart>
+									</div>
+								</div>
+							</div>
+						</mdb-card-text>
+					</mdb-card-body>
+				</mdb-card>
+			</div>
+			<div class="col-md-6">
+				<mdb-card>
+					<mdb-card-body>
+						<mdb-card-title>
+							<h4>Sensor 2</h4>
+						</mdb-card-title>
+						<mdb-card-text>
+							<div class="row">
+								<div class="col-md-12">
+									<div class="chart">
+										<ngx-charts-line-chart [view]="view" [scheme]="lineChartColorScheme" [results]="chartData"
+											[gradient]="lineChartGradient" [xAxis]="lineChartShowXAxis"
+											[yAxis]="lineChartShowYAxis" [legend]="lineChartShowLegend"
+											[showXAxisLabel]="lineChartShowXAxisLabel" [showYAxisLabel]="lineChartShowYAxisLabel"
+											[xAxisLabel]="lineChartXAxisLabel" [yAxisLabel]="lineChartYAxisLabel"
+											[autoScale]="lineChartAutoScale" [timeline]="timeline" [animations]="false"
+											[curve]="lineChartLineInterpolation" (select)="onSelect($event)">
+										</ngx-charts-line-chart>
+									</div>
+								</div>
+							</div>
+						</mdb-card-text>
+					</mdb-card-body>
+				</mdb-card>
+			</div>
+		</div>
+	</div>
+</main>
+<!-- /.Main -->

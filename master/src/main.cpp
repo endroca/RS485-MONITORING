@@ -2,11 +2,14 @@
 #include <HardwareSerial.h>
 #include <ArduinoJson.h>
 
-static const uint8_t MAX_NUMBER_OF_SLAVES = 2;
+static const unsigned int TIME_OUT = 3;
 
+static const uint8_t MAX_NUMBER_OF_SLAVES = 2;
 static const uint8_t TRANSMITER_PIN = 5;
-static const uint8_t SENSOR_PIN = 34;
-static const uint8_t LED_RECEIVED_PIN = 2;
+
+static const uint8_t LED_TRANSMITER_PIN = 2;
+static const uint8_t LED_READ_SENSOR = 10;
+static const uint8_t LED_SET_POINT = 11;
 
 static const char *DEVICE_ID = "M1";
 
@@ -18,31 +21,71 @@ uint8_t DEVICES_ONLINE = 0;
 unsigned long timeNow = 0;
 unsigned long timeTransmiter = 0;
 
-static const unsigned int timeOut = 10;
 
 
+void transmitter(StaticJsonDocument<200> doc);
 void transmitter(char* addressee, uint8_t action);
 void scanDevices();
 void readRS485();
+void masterReset();
 
 void setup(){
 	Serial.begin(500000);
 	RS485.begin(1000000, SERIAL_8N1, 16, 17);
 
 	pinMode(TRANSMITER_PIN, OUTPUT);
-	pinMode(LED_RECEIVED_PIN, OUTPUT);
+	pinMode(LED_TRANSMITER_PIN, OUTPUT);
 
 	digitalWrite(TRANSMITER_PIN, LOW);
-	digitalWrite(LED_RECEIVED_PIN, LOW);
+	digitalWrite(LED_TRANSMITER_PIN, LOW);
 }
 
 void loop(){
 	
 	if(Serial.available() > 0){
-		//StaticJsonDocument<200> doc;
-		//DeserializationError error = deserializeJson(doc, Serial);		
+		StaticJsonDocument<200> doc;
+		DeserializationError error = deserializeJson(doc, Serial);
+
+		if(error){
+			Serial.println(error.c_str());
+		}else{
+			const uint8_t function = doc["function"]; //function
+			
+			switch (function){
+				//set configuration in slave
+				case 1:
+					transmitter(doc);
+					break;
+
+				
+				//get slaves online
+				case 2:
+					{
+						StaticJsonDocument<200> online;
+						JsonArray array = online.to<JsonArray>();
+						for(uint8_t i = 0; i < DEVICES_ONLINE;i++){
+							array.add(DEVICES[i]);
+						}
+						serializeJson(online, Serial);
+						Serial.write('\n');
+						Serial.flush();
+					}
+					break;
+				
+				//Master reset
+				case 3:
+					masterReset();
+					break;
+
+				default:
+					break;
+			}
+		}
 	}
 	
+	/*
+	*	Routine operation
+	*/
 	if(DEVICES_ONLINE == 0){
 		scanDevices();
 	}else{
@@ -52,7 +95,7 @@ void loop(){
 			bool received = true;
 			timeNow = millis();
 			while(RS485.available() == 0){
-				if(millis() - timeNow > timeOut){
+				if(millis() - timeNow >= TIME_OUT){
 					received = false;
 					break;
 				}
@@ -61,14 +104,12 @@ void loop(){
 			if(received){
 				readRS485();
 			}
-
-			delay(500);
 		}
 	}
 }
 
 void readRS485(){
-	digitalWrite(LED_RECEIVED_PIN, HIGH);	
+	
 	StaticJsonDocument<200> doc;
 	DeserializationError error = deserializeJson(doc, RS485);	
 	if (error){
@@ -88,8 +129,6 @@ void readRS485(){
 		Serial.write('\n');
 		Serial.flush();
 	}	
-
-	digitalWrite(LED_RECEIVED_PIN, LOW);
 }
 
 void scanDevices(){
@@ -109,7 +148,7 @@ void scanDevices(){
 		bool received = true;
 		timeNow = millis();
 		while(RS485.available() == 0){
-			if(millis() - timeNow > 100){
+			if(millis() - timeNow >= TIME_OUT){
 				received = false;
 				break;
 			}
@@ -136,29 +175,45 @@ void scanDevices(){
 }
 
 void transmitter(char* addressee, uint8_t action){
-	digitalWrite(TRANSMITER_PIN, HIGH);
-
 	StaticJsonDocument<200> doc;
 	doc["addressee"] = addressee;
 	doc["action"] = action;
+
+	transmitter(doc);
+}
+
+void transmitter(StaticJsonDocument<200> doc){
+	digitalWrite(LED_TRANSMITER_PIN, HIGH);	
+	digitalWrite(TRANSMITER_PIN, HIGH);
+
 	serializeJson(doc, RS485);
 	RS485.flush();
 	timeTransmiter = millis();
-	
+
 	/*
 	Serial.print("Send: ");
 	serializeJson(doc, Serial);
 	Serial.println();
 	*/
-	
+
+	digitalWrite(LED_TRANSMITER_PIN, LOW);
 	digitalWrite(TRANSMITER_PIN, LOW);
+}
+
+void masterReset(){
+	ESP.restart();
+/*	
+	Hard reset
+	esp_task_wdt_init(1,true);
+	esp_task_wdt_add(NULL);
+*/
 }
 
 /*
 * Structure
 * {
 		addressee: S1 ... S32
-		action: [0 = 'ping',1 = 'read']
+		action: [0 = 'ping',1 = 'read',2 = 'configs']
 	}
 */
 /*

@@ -2,11 +2,21 @@
 #include <HardwareSerial.h>
 #include <ArduinoJson.h>
 
-const uint8_t TRANSMITER_PIN = 5;
-const uint8_t SENSOR_PIN = 34;
-const uint8_t LED_RECEIVED_PIN = 2;
+static const uint8_t TRANSMITER_PIN = 5;
+static const uint8_t SENSOR_PIN = 34;
 
-const char *DEVICE_ID = "S1";
+static const uint8_t LED_TRANSMITER_PIN = 2;
+static const uint8_t LED_READ_SENSOR = 10;
+static const uint8_t LED_SET_POINT = 11;
+
+static const char *DEVICE_ID = "S1";
+
+uint16_t setPoint = -1; //default(not defined)
+unsigned int sampleTime = 1000; //default(1 sec)
+uint16_t ADCValue;
+bool ADCTransmitted = true;
+unsigned long timeNow = 0;
+
 HardwareSerial RS485(1);
 
 void transmitter(uint8_t action);
@@ -16,27 +26,41 @@ void setup(){
 	RS485.begin(1000000, SERIAL_8N1, 16, 17);
 
 	pinMode(TRANSMITER_PIN, OUTPUT);
-	pinMode(LED_RECEIVED_PIN, OUTPUT);
+	pinMode(LED_TRANSMITER_PIN, OUTPUT);
 
 	digitalWrite(TRANSMITER_PIN, LOW);
-	digitalWrite(LED_RECEIVED_PIN, LOW);
+	digitalWrite(LED_TRANSMITER_PIN, LOW);
 }
 
 void loop(){
-	if(RS485.available() > 0){
-		digitalWrite(LED_RECEIVED_PIN, HIGH);
 
+	if(millis() - timeNow >= sampleTime){
+		ADCValue = analogRead(SENSOR_PIN);
+		ADCTransmitted = false;
+
+		timeNow = millis();
+	}
+
+	if(RS485.available() > 0){
 		StaticJsonDocument<200> doc;
 		DeserializationError error = deserializeJson(doc, RS485);
 
 		if(error){
 			Serial.println(error.c_str());
 		}else{
-			const char* addressee = doc["addressee"];
-			const uint8_t action = doc["action"];
+			if (doc.containsKey("function")) {
 
-			if(strcmp(addressee,DEVICE_ID) == 0){
-				transmitter(action);
+			}else{
+				const char* addressee = doc["addressee"];
+				const uint8_t action = doc["action"];
+
+				if(strcmp(addressee,DEVICE_ID) == 0){
+					if(!ADCTransmitted){
+						transmitter(action);
+
+						ADCTransmitted = true;
+					}
+				}
 			}
 			/*
 			Serial.print("Receveid: ");
@@ -44,12 +68,11 @@ void loop(){
 			Serial.println();
 			*/
 		}
-	
-		digitalWrite(LED_RECEIVED_PIN, LOW);
 	}
 }
 
 void transmitter(uint8_t action){
+	digitalWrite(LED_TRANSMITER_PIN, HIGH);
 	digitalWrite(TRANSMITER_PIN, HIGH);
 
 	StaticJsonDocument<200> doc;
@@ -57,7 +80,7 @@ void transmitter(uint8_t action){
 
 	switch (action){
 		case 1:
-			doc["sensor"] = analogRead(SENSOR_PIN);
+			doc["sensor"] = ADCValue;
 			break;
 		
 		default:
@@ -72,7 +95,7 @@ void transmitter(uint8_t action){
 	serializeJson(doc, Serial);
 	Serial.println();
 	*/
-
+	digitalWrite(LED_TRANSMITER_PIN, LOW);
 	digitalWrite(TRANSMITER_PIN, LOW);	
 }
 

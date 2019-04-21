@@ -30,9 +30,13 @@ export class SocketService {
         });
     }*/
 
-    public getMessages = () => {
+    public slavesOnline(){
+
+    }
+
+    public getMessages = (event) => {
         return Observable.create((observer) => {
-            this.socket.on('sensors', (message) => {
+            this.socket.on(event, (message) => {
                 observer.next(message);
             });
         });
@@ -42,5 +46,6 @@ export class SocketService {
         return new Observable<Event>(observer => {
             this.socket.on(event, () => observer.next());
         });
-    }*/
+    }
+    */
 }

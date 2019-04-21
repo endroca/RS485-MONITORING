@@ -2,6 +2,7 @@ import { LOCALE_ID } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { HttpClientModule } from '@angular/common/http';
 
 import { AppComponent } from './app.component';
 
@@ -24,11 +25,12 @@ registerLocaleData(localePt, 'pt-BR');
     BrowserAnimationsModule,
     MDBBootstrapModule.forRoot(),
     FormsModule,
-    LineChartModule
+    LineChartModule,
+    HttpClientModule
   ],
   providers: [
     { provide: LOCALE_ID, useValue: 'pt-BR' },
-    SocketService
+    SocketService,
   ],
   bootstrap: [AppComponent]
 })

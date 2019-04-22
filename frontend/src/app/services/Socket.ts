@@ -12,6 +12,12 @@ export class SocketService {
         this.socket = socketIo('http://localhost:3000');
     }
 
+    checkConnection(){
+        return this.socket.connected;
+    }
+
+    
+
     disconnect(){
         this.socket.disconnect();
     }

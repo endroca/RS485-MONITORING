@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-
+import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import * as chartsData from './config/ngx-charts.config';
 import { SocketService } from './services/Socket';
 import { DatePipe } from '@angular/common';
@@ -20,6 +20,7 @@ export class AppComponent {
 	slavesOnline: string[];
 	chartData: {
 		[index: string]: {
+			name: string,
 			legendX: string,
 			legendY: string,
 			data: {
@@ -31,7 +32,11 @@ export class AppComponent {
 			}[]
 		}
 	} = {};
-	slaveReciver: { id: string, sensor: string, ping: number }
+	slaveReciver: { id: string, sensor: string, ping: number };
+	settingForm: FormGroup;
+
+	//display alerts
+	alert: { type: string, message: string } = null;
 
 	/*
 	* Ngx chart configs
@@ -49,7 +54,9 @@ export class AppComponent {
 	timeline = false;
 
 
-	constructor(private socket: SocketService, private http: HttpClient) {
+	constructor(private socket: SocketService,
+		private http: HttpClient,
+		private formBuilder: FormBuilder) {
 	}
 
 
@@ -73,27 +80,58 @@ export class AppComponent {
 
 			}
 		});
+
+
+		this.settingForm = this.formBuilder.group({
+			'sensorKey': [null, [Validators.required]],
+			'name': [null, [Validators.required]],
+			'sampleTime': [null, [Validators.required]],
+			'legendX': [null, [Validators.required]],
+			'legendY': [null, [Validators.required]],
+			'setPoint': [null, [Validators.required]],
+			'function': [null, [Validators.required]]
+		});
+	}
+
+	settingSubmit() {
+		if (!this.settingForm.invalid) {
+
+		}
 	}
 
 	_initStructure() {
 		this.http.get('http://localhost:3000/slavesOnline')
 			.pipe(map(data => data as string[]))
 			.subscribe(data => {
-				this.slavesOnline = data;
+				if (data.length) {
+					this.alert = null;
+					this.slavesOnline = data;
 
-				for (let sensor in this.slavesOnline) {
-					this.chartData[this.slavesOnline[sensor]] = {
-						legendX: "Tempo",
-						legendY: "Bit",
-						data: [{
+					for (let sensor in this.slavesOnline) {
+						this.chartData[this.slavesOnline[sensor]] = {
 							name: sensor,
-							series: [{
-								name: '',
-								value: 0
+							legendX: "Tempo",
+							legendY: "Bit",
+							data: [{
+								name: sensor,
+								series: [{
+									name: '',
+									value: 0
+								}]
 							}]
-						}]
+						};
+					}
+				} else {
+					this.alert = {
+						type: 'warning',
+						message: 'Nenhum sensor encontrado'
 					};
 				}
+			}, error => {
+				this.alert = {
+					type: 'danger',
+					message: 'Não foi possivel localizar o servidor'
+				};
 			});
 	}
 

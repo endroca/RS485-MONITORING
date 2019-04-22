@@ -2,17 +2,23 @@
 	"name": "server",
 	"version": "1.0.0",
 	"description": "",
-	"main": "main.js",
 	"scripts": {
-		"start": "node main.js",
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"start": "node ./bin/www",
+		"watch": "nodemon ./bin/www"
 	},
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
 		"cors": "^2.8.5",
+		"dotenv": "^7.0.0",
 		"express": "^4.16.4",
+		"express-validator": "^5.3.1",
+		"mongoose": "^5.5.2",
+		"morgan": "^1.9.1",
 		"serialport": "^7.1.4",
 		"socket.io": "^2.2.0"
+	},
+	"devDependencies": {
+		"nodemon": "^1.18.11"
 	}
 }

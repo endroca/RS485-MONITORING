@@ -66,17 +66,26 @@ export class AppComponent {
 
 		// Init socket message
 		this.socket.getMessages('sensors').subscribe((msg) => {
-			if (msg.id in this.chartData) {
-				const series = this.chartData[msg.id].data[0].series;
-
-				series.push({ name: this.pipe.transform(Date.now(), 'mm:ss SSS'), value: msg['sensor'] });
-
-				if (series.length > 30) {
-					series.shift();
+			if ("action" in msg) {
+				switch (msg.action) {
+					case "reload":
+						this.resetInterface();
+						this._initStructure();
+						break;
 				}
+			} else {
+				if (msg.id in this.chartData) {
+					const series = this.chartData[msg.id].data[0].series;
 
-				this.chartData[msg.id].data = [...this.chartData[msg.id].data];
+					series.push({ name: this.pipe.transform(Date.now(), 'mm:ss SSS'), value: msg['sensor'] });
 
+					if (series.length > 30) {
+						series.shift();
+					}
+
+					this.chartData[msg.id].data = [...this.chartData[msg.id].data];
+
+				}
 			}
 		});
 
@@ -90,6 +99,10 @@ export class AppComponent {
 			'setPoint': [null, [Validators.required]],
 			'function': [null, [Validators.required]]
 		});
+	}
+
+	resetInterface(){
+		this._cleanObject(this.chartData);
 	}
 
 	settingSubmit() {
@@ -109,10 +122,10 @@ export class AppComponent {
 					for (let sensor in data) {
 						this.chartData[data[sensor].serial] = {
 							name: (data[sensor].name) ? data[sensor].name : data[sensor].serial,
-							legendX: "Tempo",
-							legendY: "Bit",
+							legendX: (data[sensor].legendX) ? data[sensor].legendX : 'Tempo',
+							legendY: (data[sensor].legendY) ? data[sensor].legendY : 'Bit',
 							data: [{
-								name: sensor,
+								name: (data[sensor].name) ? data[sensor].name : data[sensor].serial,
 								series: [{
 									name: '',
 									value: 0
@@ -139,8 +152,11 @@ export class AppComponent {
 	}
 
 	_cleanObject(obj) {
-		for (const prop of Object.keys(obj)) {
-			delete obj[prop];
+		if (this._length(obj)) {
+			for (const prop of Object.keys(obj)) {
+				delete obj[prop];
+			}
 		}
+
 	}
 }

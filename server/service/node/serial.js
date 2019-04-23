@@ -50,16 +50,25 @@ port.on('open', () => {
 
 parser.on('data', (line) => {
     line = JSON.parse(line);
-    
-    if("action" in line){
+
+    if ("action" in line) {
         //model -> {"action":2,"response":[{"id":"S1","configs":[1000,-1]}]}
         switch (line.action) {
             case 2:
                 functions.responseFunctions(2, line.response, socket.emit('action', 2));
+                break;
         }
-    }else{
+    } else {
         socket.emit('read', line);
         console.log('Sendo room(read): ', line);
+    }
+});
+
+socket.on('action', (msg) => {
+    switch(msg.action){
+        case 2:
+            functions.responseFunctions(2, line.response, socket.emit('action', 2));
+            break;
     }
 });
 

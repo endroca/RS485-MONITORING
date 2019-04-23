@@ -25,36 +25,45 @@ function RegisterAndUpdateSensorsOnline(response, callback) {
     * response = [{"id":"S1","configs":[sampleTime=1000,setPoint=-1]}]
     */
 
-    for (let res in response) {
-        Sensors.findOne({ serial: response[res]['id'] }, (err, sensor) => {
+    Sensors.updateMany({ online: true }, { online: false }, (err, raw) => {
 
-            if (sensor) {
-                sensor.online = true;
+        if (err) {
+            console.error(err);
+            return false;
+        }
 
-                sensor.save((err, result) => {
-                    if (!err) {
-                        if (callback && typeof(callback) === "function") callback();
-                        console.log("Sensor atualizado com sucesso");
-                    } else {
-                        console.error("Erro ao atualizar as informações do sensor");
-                    }
-                });
-            } else {
-                let sensor = new Sensors();
-                sensor.serial = response[res]['id'];
-                sensor.online = true;
-                sensor.sampleTime = response[res]['configs'][0];
-                sensor.setPoint = response[res]['configs'][1];
+        for (let res in response) {
+            Sensors.findOne({ serial: response[res]['id'] }, (err, sensor) => {
 
-                sensor.save((err, result) => {
-                    if (!err) {
-                        if (callback && typeof(callback) === "function") callback();
-                        console.log("sensor cadastado com sucesso");
-                    } else {
-                        console.error(err);
-                    }
-                });
-            }
-        });
-    }
+                if (sensor) {
+                    sensor.online = true;
+
+                    sensor.save((err, result) => {
+                        if (!err) {
+                            if (callback && typeof (callback) === "function") callback();
+                            console.log("Sensor atualizado com sucesso");
+                        } else {
+                            console.error("Erro ao atualizar as informações do sensor");
+                        }
+                    });
+                } else {
+                    let sensor = new Sensors();
+                    sensor.serial = response[res]['id'];
+                    sensor.online = true;
+                    sensor.sampleTime = response[res]['configs'][0];
+                    sensor.setPoint = response[res]['configs'][1];
+
+                    sensor.save((err, result) => {
+                        if (!err) {
+                            if (callback && typeof (callback) === "function") callback();
+                            console.log("sensor cadastado com sucesso");
+                        } else {
+                            console.error(err);
+                        }
+                    });
+                }
+            });
+        }
+
+    });
 }

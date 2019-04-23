@@ -66,10 +66,9 @@ io.on("connection", (client) => {
     });
 
     client.on("action", (msg) => {
-        switch(msg){
+        switch (msg) {
             case 2:
-                io.emit('sensors', { action: 'update' });
-                console.log("chegou aqui");
+                io.emit('sensors', { action: 'reload' });
                 break;
         }
     })

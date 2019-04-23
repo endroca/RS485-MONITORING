@@ -17,7 +17,6 @@ export class AppComponent {
 	*/
 	pipe = new DatePipe('pt-BR');
 	objectKeys = Object.keys;
-	slavesOnline: string[];
 	chartData: {
 		[index: string]: {
 			name: string,
@@ -66,7 +65,7 @@ export class AppComponent {
 
 
 		// Init socket message
-		this.socket.getMessages('slave').subscribe((msg) => {
+		this.socket.getMessages('sensors').subscribe((msg) => {
 			if (msg.id in this.chartData) {
 				const series = this.chartData[msg.id].data[0].series;
 
@@ -100,16 +99,16 @@ export class AppComponent {
 	}
 
 	_initStructure() {
-		this.http.get('http://localhost:3000/slavesOnline')
-			.pipe(map(data => data as string[]))
+		this.http.get('http://localhost:3000/sensorsOnline')
+			.pipe(map(data => data as Array<any>))
 			.subscribe(data => {
+
 				if (data.length) {
 					this.alert = null;
-					this.slavesOnline = data;
 
-					for (let sensor in this.slavesOnline) {
-						this.chartData[this.slavesOnline[sensor]] = {
-							name: sensor,
+					for (let sensor in data) {
+						this.chartData[data[sensor].serial] = {
+							name: (data[sensor].name) ? data[sensor].name : data[sensor].serial,
 							legendX: "Tempo",
 							legendY: "Bit",
 							data: [{

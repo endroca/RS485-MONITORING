@@ -10,9 +10,6 @@ const cors = require('cors');
 
 const mongoose = require('mongoose');
 
-const SerialPort = require('serialport');
-const Readline = require('@serialport/parser-readline');
-
 
 
 /*
@@ -41,13 +38,13 @@ require('./models/Sensors');
 */
 const indexRouter = require('./routes/sensors');
 
-if(process.env.NODE_ENV == 'development'){
-	app.use(logger('dev'));
+if (process.env.NODE_ENV == 'development') {
+    app.use(logger('dev'));
 }
 
 app.use(function (req, res, next) {
-	res.io = io;
-	next();
+    res.io = io;
+    next();
 });
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -56,60 +53,27 @@ app.use(cors());
 
 app.use('/', indexRouter);
 
-/*
-* Parser
-*/
-const port = new SerialPort(process.env.USB_PORT, { baudRate: parseInt(process.env.USB_RATE) });
-const parser = port.pipe(new Readline());
-
-/*
-* VARIABLES
-*/
-let slavesOnline = [];
-let requestSlaves = false;
-
-
-/*
-* Function
-*/
-function _slavesOnline() {
-    port.write('{function:2}');
-    requestSlaves = true;
-}
-
-function _registerUpdateSensor(){
-
-}
-
 
 /*
 * EVENTS
 */
-port.on('error', (err) => {
-    console.log('Error: ', err.message);
-});
-
-port.on('open', () => {
-    //Get slaves connected
-    _slavesOnline();
-});
-
-parser.on('data', (line) => {
-    if (requestSlaves) {
-        salvesOnline = JSON.parse(line);
-        requestSlaves = false;
-    } else {
-        io.emit('slave', JSON.parse(line));
-    }
-    console.log(line);
-});
-
 
 io.on("connection", (client) => {
     console.log('user connected');
+
+    client.on("read", (msg) => {
+        io.emit('sensors', msg);
+    });
+
+    client.on("action", (msg) => {
+        switch(msg){
+            case 2:
+                io.emit('sensors', { action: 'update' });
+                console.log("chegou aqui");
+                break;
+        }
+    })
 });
-
-
 
 
 // catch 404 and forward to error handler

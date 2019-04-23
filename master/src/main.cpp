@@ -2,7 +2,11 @@
 #include <HardwareSerial.h>
 #include <ArduinoJson.h>
 
-static const unsigned int TIME_OUT = 3;
+/*
+*  CONSTANTS
+*/
+static const uint8_t TIME_OUT = 3;
+static const uint8_t MAX_ATTEMPTS = 3;
 
 static const uint8_t MAX_NUMBER_OF_SLAVES = 2;
 static const uint8_t TRANSMITER_PIN = 5;
@@ -13,13 +17,19 @@ static const uint8_t LED_SET_POINT = 11;
 
 static const char *DEVICE_ID = "M1";
 
+/*
+* VARIABLE OF PROCESS
+*/
+
 HardwareSerial RS485(1);
 
 char *DEVICES[MAX_NUMBER_OF_SLAVES];
 uint8_t DEVICES_ONLINE = 0;
+uint8_t attempts = 0;
 
 unsigned long timeNow = 0;
 unsigned long timeTransmiter = 0;
+
 
 
 
@@ -30,7 +40,7 @@ void readRS485();
 void masterReset();
 
 void setup(){
-	Serial.begin(500000);
+	Serial.begin(115200);
 	RS485.begin(1000000, SERIAL_8N1, 16, 17);
 
 	pinMode(TRANSMITER_PIN, OUTPUT);
@@ -49,27 +59,17 @@ void loop(){
 		if(error){
 			Serial.println(error.c_str());
 		}else{
-			const uint8_t function = doc["function"]; //function
+			const uint8_t action = doc["action"]; //action
 			
-			switch (function){
+			switch (action){
 				//set configuration in slave
 				case 1:
 					transmitter(doc);
 					break;
 
-				
 				//get slaves online
 				case 2:
-					{
-						StaticJsonDocument<200> online;
-						JsonArray array = online.to<JsonArray>();
-						for(uint8_t i = 0; i < DEVICES_ONLINE;i++){
-							array.add(DEVICES[i]);
-						}
-						serializeJson(online, Serial);
-						Serial.write('\n');
-						Serial.flush();
-					}
+					scanDevices();
 					break;
 				
 				//Master reset
@@ -86,22 +86,27 @@ void loop(){
 	/*
 	*	Routine operation
 	*/
-	if(DEVICES_ONLINE == 0){
+	if(DEVICES_ONLINE == 0 || attempts >= MAX_ATTEMPTS){
 		scanDevices();
+		delay(1000);
 	}else{
 		for(uint8_t i = 0; i < DEVICES_ONLINE;i++){
+			//opening channel
 			transmitter(DEVICES[i], 1);
 
+			//response control
 			bool received = true;
 			timeNow = millis();
 			while(RS485.available() == 0){
 				if(millis() - timeNow >= TIME_OUT){
 					received = false;
+					attempts++;
 					break;
 				}
 			}
 
 			if(received){
+				//reading the slaves' data
 				readRS485();
 			}
 		}
@@ -116,24 +121,33 @@ void readRS485(){
 		Serial.println(error.c_str());
 	}
 	else{
-		unsigned long PING = millis() - timeTransmiter;	
-		const char *slaveID = doc["id"];
-		uint16_t sensor = doc["sensor"];	
+		unsigned long PING = millis() - timeTransmiter;
 
-		StaticJsonDocument<200> doc;
-		doc["id"] = slaveID;
-		doc["sensor"] = sensor;
-		doc["ping"] = PING;
+		if(doc.containsKey("sensor")){
+			const char *slaveID = doc["id"];
+			uint16_t sensor = doc["sensor"];	
 
-		serializeJson(doc, Serial);
-		Serial.write('\n');
-		Serial.flush();
+			StaticJsonDocument<200> doc;
+			doc["id"] = slaveID;
+			doc["sensor"] = sensor;
+			doc["ping"] = PING;
+
+			serializeJson(doc, Serial);
+			Serial.write('\n');
+			Serial.flush();
+		}
 	}	
 }
 
 void scanDevices(){
 	uint8_t index = 0;
+	
 	DEVICES_ONLINE = 0;
+	attempts = 0;
+
+	DynamicJsonDocument response(512);
+	response["action"] = 2; // action to ping (serial pc->master)
+	JsonArray sensors = response.createNestedArray("response");
 
 	for(uint8_t i = 1; i <= MAX_NUMBER_OF_SLAVES; i++){
 		String addresseeTMP = "S";
@@ -162,6 +176,9 @@ void scanDevices(){
 				Serial.println(error.c_str());
 			}
 			else{
+				JsonObject obj = doc.as<JsonObject>();
+				sensors.add(obj);
+
 				const char* id = doc["id"];
 				DEVICES[index] = strdup(id);
 
@@ -172,6 +189,9 @@ void scanDevices(){
 
 	}
 
+	serializeJson(response, Serial);
+	Serial.write('\n');
+	Serial.flush();
 }
 
 void transmitter(char* addressee, uint8_t action){

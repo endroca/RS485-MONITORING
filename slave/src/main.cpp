@@ -11,7 +11,7 @@ static const uint8_t LED_SET_POINT = 11;
 
 static const char *DEVICE_ID = "S1";
 
-uint16_t setPoint = -1; //default(not defined)
+int setPoint = -1; //default(not defined)
 unsigned int sampleTime = 1000; //default(1 sec)
 uint16_t ADCValue;
 bool ADCTransmitted = true;
@@ -19,7 +19,7 @@ unsigned long timeNow = 0;
 
 HardwareSerial RS485(1);
 
-void transmitter(uint8_t action);
+void transmitter(StaticJsonDocument<200> doc);
 
 void setup(){
 	Serial.begin(115200);
@@ -55,37 +55,45 @@ void loop(){
 				const uint8_t action = doc["action"];
 
 				if(strcmp(addressee,DEVICE_ID) == 0){
-					if(!ADCTransmitted){
-						transmitter(action);
 
-						ADCTransmitted = true;
+					StaticJsonDocument<200> doc;
+					doc["id"] = DEVICE_ID;
+
+					switch (action){
+						case 1:
+							{
+								if(!ADCTransmitted){
+									doc["sensor"] = ADCValue;
+									ADCTransmitted = true;
+								}
+								transmitter(doc);
+							}
+							break;
+						
+						default:
+							{
+								JsonArray configs = doc.createNestedArray("configs");
+								configs.add(sampleTime);
+								configs.add(setPoint);
+
+								transmitter(doc);
+							}
+							break;
 					}
 				}
 			}
-			/*
-			Serial.print("Receveid: ");
-			serializeJson(doc, Serial);
-			Serial.println();
-			*/
+			
+			//Serial.print("Receveid: ");
+			//serializeJson(doc, Serial);
+			//Serial.println();
+			
 		}
 	}
 }
 
-void transmitter(uint8_t action){
+void transmitter(StaticJsonDocument<200> doc){
 	digitalWrite(LED_TRANSMITER_PIN, HIGH);
 	digitalWrite(TRANSMITER_PIN, HIGH);
-
-	StaticJsonDocument<200> doc;
-	doc["id"] = DEVICE_ID;
-
-	switch (action){
-		case 1:
-			doc["sensor"] = ADCValue;
-			break;
-		
-		default:
-			break;
-	}
 
 	serializeJson(doc, RS485);
 	RS485.flush();
@@ -95,6 +103,7 @@ void transmitter(uint8_t action){
 	serializeJson(doc, Serial);
 	Serial.println();
 	*/
+
 	digitalWrite(LED_TRANSMITER_PIN, LOW);
 	digitalWrite(TRANSMITER_PIN, LOW);	
 }

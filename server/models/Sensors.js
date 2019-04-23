@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const sensorsSchema = mongoose.Schema({
     serial: { type: String, required: true, unique: true, trim: true },
+    online: { type: Boolean },
     name: { type: String, trim: true },
     sampleTime: { type: Number, required: true },
     legendX: { type: String, trim: true },

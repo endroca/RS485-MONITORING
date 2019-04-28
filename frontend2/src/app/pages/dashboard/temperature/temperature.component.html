@@ -1,0 +1,65 @@
+<nb-card size="large">
+	<nb-tabset fullWidth>
+
+		<nb-tab tabTitle="Valor desejável">
+
+			<div class="slider-container">
+				<ngx-temperature-dragger [(value)]="oSetPoint" (power)="oDisable = !$event" [min]="min" [max]="max"
+					[step]="1" [disableArcColor]="colors.layoutBg" [fillColors]="colors.temperature" [off]="oDisable"
+					(valueChangeMouseRelease)="changeValue($event)">
+
+					<div class="slider-value-container" [ngClass]="{ 'off': oDisable }">
+						<div class="value">
+							{{ oDisable ? '--' : (oSetPoint | ngxRound) }}
+						</div>
+						<div class="desc">
+							Unuidades
+						</div>
+					</div>
+				</ngx-temperature-dragger>
+			</div>
+		</nb-tab>
+
+		<nb-tab tabTitle="Configurações">
+
+			<div class="p-3">
+				<div class="row">
+					<div class="col-md-12">
+						<form novalidate="" (ngSubmit)="settingSubmit()" [formGroup]="settingForm">
+							<div class="form-group">
+								<label>Nome:</label>
+								<input class="form-control" formControlName="name" />
+							</div>
+
+							<div class="form-group">
+								<label>Taxa de amostragem:</label>
+								<input class="form-control" formControlName="sampleTime" />
+							</div>
+
+							<div class="form-group">
+								<label>Legenda X:</label>
+								<input class="form-control" formControlName="legendX" />
+							</div>
+
+							<div class="form-group">
+								<label>Legenda Y:</label>
+								<input class="form-control" formControlName="legendY" />
+							</div>
+
+							<div class="form-group">
+								<label>Função de conversão f(x=ADC):</label>
+								<input class="form-control" formControlName="function" />
+							</div>
+
+							<div class="form-group">
+								<button [disabled]="settingForm.invalid" type="submit"
+									class="btn btn-primary btn-block">Aplicar configuração</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+
+		</nb-tab>
+	</nb-tabset>
+</nb-card>

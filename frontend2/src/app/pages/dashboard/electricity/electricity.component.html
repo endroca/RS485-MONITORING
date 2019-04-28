@@ -1,0 +1,13 @@
+<nb-card size="large">
+  <nb-card-header>{{ chartData.name }}</nb-card-header>
+  <nb-card-body>
+    <div class="line-chart">
+      <ngx-charts-line-chart [view]="view" [scheme]="colorScheme" [results]="chartData.data" [xAxis]="lineChartShowXAxis"
+        [yAxis]="lineChartShowYAxis" [legend]="lineChartShowLegend" [showXAxisLabel]="lineChartShowXAxisLabel"
+        [showYAxisLabel]="lineChartShowYAxisLabel" [xAxisLabel]="chartData.legendX" [yAxisLabel]="chartData.legendY"
+        [autoScale]="lineChartAutoScale" [timeline]="timeline" [animations]="false" [curve]="lineChartLineInterpolation"
+        (select)="onSelect($event)">
+      </ngx-charts-line-chart>
+    </div>
+  </nb-card-body>
+</nb-card>

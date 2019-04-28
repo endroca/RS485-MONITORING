@@ -49,6 +49,10 @@ function RegisterAndUpdateSensorsOnline(response, callback) {
                 } else {
                     let sensor = new Sensors();
                     sensor.serial = response[res]['id'];
+                    sensor.name = 'Sensor '+response[res]['id'];
+                    sensor.legendX = 'Tempo';
+                    sensor.legendY = 'Bit';
+                    sensor.function = 'x';
                     sensor.online = true;
                     sensor.sampleTime = response[res]['configs'][0];
                     sensor.setPoint = response[res]['configs'][1];

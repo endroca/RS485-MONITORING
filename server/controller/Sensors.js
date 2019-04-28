@@ -14,7 +14,29 @@ module.exports.validator = (route) => {
 
 
 module.exports.sensorsOnline = (req, res) => {
-    Sensors.find({ online: true },['serial','online','name','sampleTime','legendX','legendY','setPoint','function'], (err, sensor) => {
+    Sensors.find({ online: true }, ['serial', 'online', 'name', 'sampleTime', 'legendX', 'legendY', 'setPoint', 'function'], (err, sensor) => {
         res.json(sensor);
+    });
+}
+
+module.exports.update = (req, res) => {
+    Sensors.findOne({ serial: req.body.serial }, (err, sensor) => {
+
+        if (sensor) {
+            sensor.name = req.body.name;
+            sensor.legendX = req.body.legendX;
+            sensor.legendY = req.body.legendY;
+            sensor.function = req.body.function;
+            sensor.sampleTime = req.body.sampleTime;
+            sensor.setPoint = req.body.setPoint;
+
+            sensor.save((err, result) => {
+                if (!err) {
+                    res.json({ msg: 'Sensor atualizado com sucesso', error: 0 });
+                } else {
+                    res.json({ msg: err, error: 1 });
+                }
+            });
+        }
     });
 }

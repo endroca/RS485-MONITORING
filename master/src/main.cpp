@@ -64,6 +64,7 @@ void loop(){
 			switch (action){
 				//set configuration in slave
 				case 1:
+					doc["action"] = 2;
 					transmitter(doc);
 					break;
 

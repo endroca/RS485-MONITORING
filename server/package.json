@@ -4,8 +4,8 @@
 	"description": "",
 	"scripts": {
 		"start": "node ./bin/www",
-		"serial" : "node ./service/node/serial",
-		"all" : "npm run start & npm run serial",
+		"serial": "node ./service/node/serial",
+		"all": "npm run start & npm run serial",
 		"watch": "nodemon ./bin/www"
 	},
 	"author": "",

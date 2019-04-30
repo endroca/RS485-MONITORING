@@ -19,7 +19,7 @@ static const unsigned int SAMPLETIME = 1000; // 4 bytes
 static const size_t EEPROM_SIZE = 7;
 
 // Device ID
-static const char *DEVICE_ID = "S1";
+static const char *DEVICE_ID = "S2";
 
 //Setting
 int16_t setPoint;

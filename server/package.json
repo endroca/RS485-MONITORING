@@ -6,7 +6,8 @@
 		"start": "node ./bin/www",
 		"serial": "node ./service/node/serial",
 		"all": "npm run start & npm run serial",
-		"watch": "nodemon ./bin/www"
+		"watch": "nodemon ./bin/www",
+		"killprocesport": "sudo kill $(sudo lsof -t -i:3000)"
 	},
 	"author": "",
 	"license": "ISC",

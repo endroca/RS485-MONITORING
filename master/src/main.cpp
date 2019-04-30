@@ -33,6 +33,7 @@ void transmitter(StaticJsonDocument<200> doc);
 void transmitter(char* addressee, uint8_t action);
 void scanDevices();
 void readRS485();
+bool waitReceiveRS485(bool attemptsController, uint8_t timeOut);
 void masterReset();
 
 
@@ -64,7 +65,10 @@ void loop(){
 					{
 						doc["action"] = 2;
 						transmitter(doc);
-						delay(10);
+						
+						if(waitReceiveRS485(false, 50)){
+							readRS485();
+						}
 					}
 					break;
 
@@ -95,18 +99,7 @@ void loop(){
 			//opening channel
 			transmitter(DEVICES[i], 1);
 
-			//response control
-			bool received = true;
-			timeNow = millis();
-			while(RS485.available() == 0){
-				if(millis() - timeNow >= TIME_OUT){
-					received = false;
-					attempts++;
-					break;
-				}
-			}
-
-			if(received){
+			if(waitReceiveRS485(true, TIME_OUT)){
 				//reading the slaves' data
 				readRS485();
 			}
@@ -140,6 +133,19 @@ void readRS485(){
 	}	
 }
 
+bool waitReceiveRS485(bool attemptsController, uint8_t timeOut){
+	bool received = true;
+	timeNow = millis();
+	while(RS485.available() == 0){
+		if(millis() - timeNow >= timeOut){
+			received = false;
+			if(attemptsController) attempts++;
+			break;
+		}
+	}
+	return received;
+}
+
 void scanDevices(){
 	uint8_t index = 0;
 	
@@ -160,16 +166,7 @@ void scanDevices(){
 		
 		transmitter(addressee, 0);
 
-		bool received = true;
-		timeNow = millis();
-		while(RS485.available() == 0){
-			if(millis() - timeNow >= TIME_OUT){
-				received = false;
-				break;
-			}
-		}
-
-		if(received){
+		if(waitReceiveRS485(false, TIME_OUT)){
 			StaticJsonDocument<200> doc;
 			DeserializationError error = deserializeJson(doc, RS485);
 

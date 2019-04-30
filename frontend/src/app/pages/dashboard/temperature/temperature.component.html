@@ -5,8 +5,7 @@
 
 			<div class="slider-container">
 				<ngx-temperature-dragger [(value)]="oSetPoint" (power)="oDisable = !$event" [min]="min" [max]="max"
-					[step]="1" [disableArcColor]="colors.layoutBg" [fillColors]="colors.temperature" [off]="oDisable"
-					(valueChangeMouseRelease)="changeValue($event)">
+					[step]="1" [disableArcColor]="colors.layoutBg" [fillColors]="colors.temperature" [off]="oDisable">
 
 					<div class="slider-value-container" [ngClass]="{ 'off': oDisable }">
 						<div class="value">
@@ -17,6 +16,22 @@
 						</div>
 					</div>
 				</ngx-temperature-dragger>
+			</div>
+
+			<div [(ngModel)]="toleranceView" ngbRadioGroup data-toggle="buttons"
+				class="btn-group btn-group-toggle btn-divided-group btn-outline-divided-group btn-group-full-width">
+				<label ngbButtonLabel class="btn btn-icon">
+					<input ngbButton type="radio" value="0" />0%
+				</label>
+				<label ngbButtonLabel class="btn btn-icon">
+					<input ngbButton type="radio" value="5" />5%
+				</label>
+				<label ngbButtonLabel class="btn btn-icon">
+					<input ngbButton type="radio" value="10" />10%
+				</label>
+				<label ngbButtonLabel class="btn btn-icon">
+					<input ngbButton type="radio" value="15" />15%
+				</label>
 			</div>
 		</nb-tab>
 
@@ -47,8 +62,18 @@
 							</div>
 
 							<div class="form-group">
-								<label>Função de conversão f(x=ADC):</label>
-								<input class="form-control" formControlName="function" />
+								<div class="row">
+									<div class="col-md-6">
+										<label>Sainda(x=ADC):</label>
+										<input class="form-control" formControlName="function" />
+									</div>
+									<div class="col-md-6">
+
+										<label>Entrada(x=setpoint):</label>
+										<input class="form-control" formControlName="setPointFunction" />
+									</div>
+								</div>
+
 							</div>
 
 							<div class="form-group">

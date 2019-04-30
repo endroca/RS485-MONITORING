@@ -2,42 +2,39 @@
 #include <HardwareSerial.h>
 #include <ArduinoJson.h>
 
-/*
-*  CONSTANTS
-*/
+// Requests controller
 static const uint8_t TIME_OUT = 3;
 static const uint8_t MAX_ATTEMPTS = 3;
-
 static const uint8_t MAX_NUMBER_OF_SLAVES = 2;
-static const uint8_t TRANSMITER_PIN = 5;
 
+// Pin definition
+static const uint8_t TRANSMITER_PIN = 5;
 static const uint8_t LED_TRANSMITER_PIN = 2;
 static const uint8_t LED_READ_SENSOR = 10;
 static const uint8_t LED_SET_POINT = 11;
 
+// Device ID
 static const char *DEVICE_ID = "M1";
 
-/*
-* VARIABLE OF PROCESS
-*/
-
+//Serial HardwareSerial
 HardwareSerial RS485(1);
 
+// Slaves controller
 char *DEVICES[MAX_NUMBER_OF_SLAVES];
 uint8_t DEVICES_ONLINE = 0;
 uint8_t attempts = 0;
 
-unsigned long timeNow = 0;
-unsigned long timeTransmiter = 0;
+unsigned long timeNow = 0; // time for timeout
+unsigned long timeTransmiter = 0; // time for PING
 
 
-
-
+// Function definition
 void transmitter(StaticJsonDocument<200> doc);
 void transmitter(char* addressee, uint8_t action);
 void scanDevices();
 void readRS485();
 void masterReset();
+
 
 void setup(){
 	Serial.begin(115200);
@@ -64,8 +61,11 @@ void loop(){
 			switch (action){
 				//set configuration in slave
 				case 1:
-					doc["action"] = 2;
-					transmitter(doc);
+					{
+						doc["action"] = 2;
+						transmitter(doc);
+						delay(10);
+					}
 					break;
 
 				//get slaves online

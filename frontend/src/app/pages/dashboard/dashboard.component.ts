@@ -20,7 +20,9 @@ export class DashboardComponent implements OnInit {
 			legendY: string,
 			sampleTime: number,
 			setPoint: number,
+			tolerance: number,
 			function: string,
+			setPointFunction: string,
 			data: {
 				name: string,
 				series: {
@@ -57,9 +59,9 @@ export class DashboardComponent implements OnInit {
 					const series = this.chartData[msg.id].data[0].series;
 					const stringFunction = this.chartData[msg.id].function.replace('x', msg['sensor']);
 
-					series.push({ name: this.pipe.transform(Date.now(), 'mm:ss SSS'), value: eval(stringFunction) });
+					series.push({ name: this.pipe.transform(Date.now(), 'ss.SSS'), value: eval(stringFunction) });
 
-					if (series.length > 30) {
+					if (series.length > 15) {
 						series.shift();
 					}
 
@@ -83,7 +85,9 @@ export class DashboardComponent implements OnInit {
 					this.chartData[event.serial].legendY = event.legendY;
 					this.chartData[event.serial].sampleTime = event.sampleTime;
 					this.chartData[event.serial].function = event.function;
+					this.chartData[event.serial].setPointFunction = event.setPointFunction;
 					this.chartData[event.serial].setPoint = event.setPoint;
+					this.chartData[event.serial].tolerance = event.tolerance;
 				}
 			})
 	}
@@ -108,7 +112,9 @@ export class DashboardComponent implements OnInit {
 							legendY: data[sensor].legendY,
 							sampleTime: data[sensor].sampleTime,
 							setPoint: data[sensor].setPoint,
+							tolerance: data[sensor].tolerance,
 							function: data[sensor].function,
+							setPointFunction: data[sensor].setPointFunction,
 							data: [{
 								name: (data[sensor].name) ? data[sensor].name : data[sensor].serial,
 								series: [{

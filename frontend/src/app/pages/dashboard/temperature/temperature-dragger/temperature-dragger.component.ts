@@ -39,11 +39,11 @@ export class TemperatureDraggerComponent implements AfterViewInit, OnChanges {
   onMouseUp(event) {
     this.recalculateValue(event);
     this.isMouseDown = false;
-
+    /*
     if (!this.off) {
       this.valueChangeMouseRelease.emit(this.value);
     }
-
+    */
   }
 
   @HostListener('window:mousemove', ['$event'])

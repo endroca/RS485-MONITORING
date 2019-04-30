@@ -48,8 +48,14 @@ port.on('open', () => {
     port.write(functions.requestFunction(2));
 });
 
-parser.on('data', (line) => {
-    line = JSON.parse(line);
+parser.on('data', ($line) => {
+    try{
+        line = JSON.parse($line);
+    }catch(e){
+        console.log($line);
+    }
+    
+    console.log(line);
 
     if ("action" in line) {
         //model -> {"action":2,"response":[{"id":"S1","configs":[1000,-1]}]}
@@ -66,8 +72,12 @@ parser.on('data', (line) => {
 
 socket.on('action', (msg) => {
     switch(msg.action){
+        case 1:
+            msg.message["action"] = 1;
+            port.write(JSON.stringify(msg.message));
+            break;
         case 2:
-            functions.responseFunctions(2, line.response, socket.emit('action', 2));
+            port.write(functions.requestFunction(2));
             break;
     }
 });

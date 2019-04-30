@@ -14,7 +14,7 @@ module.exports.validator = (route) => {
 
 
 module.exports.sensorsOnline = (req, res) => {
-    Sensors.find({ online: true }, ['serial', 'online', 'name', 'sampleTime', 'legendX', 'legendY', 'setPoint', 'function'], (err, sensor) => {
+    Sensors.find({ online: true }, ['serial', 'online', 'name', 'sampleTime', 'legendX', 'legendY', 'setPoint', 'tolerance', 'function', 'setPointFunction'], (err, sensor) => {
         res.json(sensor);
     });
 }
@@ -27,8 +27,22 @@ module.exports.update = (req, res) => {
             sensor.legendX = req.body.legendX;
             sensor.legendY = req.body.legendY;
             sensor.function = req.body.function;
-            sensor.sampleTime = req.body.sampleTime;
-            sensor.setPoint = req.body.setPoint;
+            sensor.setPointFunction = req.body.setPointFunction;
+            
+
+            if(sensor.sampleTime != req.body.sampleTime || sensor.setPoint != req.body.setPoint || sensor.tolerance != req.body.tolerance){
+                sensor.sampleTime = req.body.sampleTime;
+                sensor.setPoint = req.body.setPoint;
+                sensor.tolerance = req.body.tolerance;
+
+                res.io.emit('action', {
+                    action : 1,
+                    message : {
+                        addressee : req.body.serial,
+                        configs : [sensor.sampleTime, sensor.setPoint, sensor.tolerance]
+                    }
+                });
+            }
 
             sensor.save((err, result) => {
                 if (!err) {

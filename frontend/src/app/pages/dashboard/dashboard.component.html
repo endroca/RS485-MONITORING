@@ -2,7 +2,7 @@
   <div class="col-xxxl-3 col-xxl-4 col-lg-5 col-md-6">
     <ngx-temperature [serial]='key' [name]='chartData[key].name' [legendX]='chartData[key].legendX'
       [legendY]='chartData[key].legendY' [sampleTime]='chartData[key].sampleTime' [setPoint]='chartData[key].setPoint'
-      [function]='chartData[key].function' (setting)='setting($event)'></ngx-temperature>
+      [tolerance]='chartData[key].tolerance' [function]='chartData[key].function' [setPointFunction]='chartData[key].setPointFunction' (setting)='setting($event)'></ngx-temperature>
   </div>
 
   <div class="col-xxxl-9 col-xxl-8 col-lg-7 col-md-6">

@@ -22,7 +22,7 @@ Enviado: { "action" : 2,"addressee": $id ,"configs": [tempo de amostragem, setpo
 Recebido: { "id" : "$id" } 
  ```
 
-Comunicação supervisorio-mestre
+**Comunicação supervisorio-mestre**
 
  - Solicitando os escravos online
 ``` 

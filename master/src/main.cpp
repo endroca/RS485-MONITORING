@@ -8,10 +8,12 @@ static const uint8_t MAX_ATTEMPTS = 3;
 static const uint8_t MAX_NUMBER_OF_SLAVES = 2;
 
 // Pin definition
-static const uint8_t TRANSMITER_PIN = 5;
-static const uint8_t LED_TRANSMITER_PIN = 2;
-static const uint8_t LED_READ_SENSOR = 10;
-static const uint8_t LED_SET_POINT = 11;
+static const uint8_t TRANSMITER_PIN = 21;
+	
+static const uint8_t LED_TRANSMITER_PIN = 12;
+static const uint8_t LED_READ_SENSOR = 26;
+static const uint8_t LED_SET_POINT = 25;
+static const uint8_t LED_ON_OFF = 32;
 
 // Device ID
 static const char *DEVICE_ID = "M1";
@@ -91,7 +93,7 @@ void loop(){
 	/*
 	*	Routine operation
 	*/
-	if(DEVICES_ONLINE == 0 || attempts >= MAX_ATTEMPTS){
+	if(DEVICES_ONLINE == 0){
 		scanDevices();
 		delay(1000);
 	}else{
@@ -102,6 +104,10 @@ void loop(){
 			if(waitReceiveRS485(true, TIME_OUT)){
 				//reading the slaves' data
 				readRS485();
+			}else{
+				if(attempts >= MAX_ATTEMPTS){
+					scanDevices();
+				}
 			}
 		}
 	}

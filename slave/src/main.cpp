@@ -4,11 +4,14 @@
 #include <EEPROM.h>
 
 // Pin definition
-static const uint8_t TRANSMITER_PIN = 5;
+static const uint8_t TRANSMITER_PIN = 21;
+
 static const uint8_t SENSOR_PIN = 34;
-static const uint8_t LED_TRANSMITER_PIN = 2;
-static const uint8_t LED_READ_SENSOR = 10;
-static const uint8_t LED_SET_POINT = 11;
+
+static const uint8_t LED_TRANSMITER_PIN = 12;
+static const uint8_t LED_READ_SENSOR = 26;
+static const uint8_t LED_SET_POINT = 25;
+static const uint8_t LED_ON_OFF = 32;
 
 // Const operation (default)
 static const int16_t SETPOINT = -1; // 2 bytes
@@ -63,8 +66,16 @@ void loop(){
 
 	if(millis() - timeNow >= sampleTime){
 		ADCValue = analogRead(SENSOR_PIN);
+
+		if(ADCValue <= (setPoint*(1 + (double) tolerance/100)) && ADCValue >= (setPoint*(1 - (double) tolerance/100))){
+			digitalWrite(LED_SET_POINT, HIGH);
+		}else{
+			digitalWrite(LED_SET_POINT, LOW);
+		}
+
 		ADCTransmitted = false;
 
+		digitalWrite(LED_READ_SENSOR, HIGH);
 		timeNow = millis();
 	}
 
@@ -90,6 +101,7 @@ void loop(){
 								if(!ADCTransmitted){
 									doc["sensor"] = ADCValue;
 									ADCTransmitted = true;
+									digitalWrite(LED_READ_SENSOR, LOW);
 								}
 							}
 							break;

@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <HardwareSerial.h>
 #include <ArduinoJson.h>
+#include <WiFi.h>
+#include <WiFiClient.h>
 
 // Requests controller
 static const uint8_t TIME_OUT = 3;
@@ -16,7 +18,12 @@ static const uint8_t LED_SET_POINT = 25;
 static const uint8_t LED_ON_OFF = 32;
 
 // Device ID
-static const char *DEVICE_ID = "M1";
+const char* DEVICE_ID = "M1";
+const char* PASSWORD = "ifes";
+
+//WebServer
+WiFiServer server(80);
+WiFiClient client;
 
 //Serial HardwareSerial
 HardwareSerial RS485(1);
@@ -33,14 +40,23 @@ unsigned long timeTransmiter = 0; // time for PING
 // Function definition
 void transmitter(StaticJsonDocument<200> doc);
 void transmitter(char* addressee, uint8_t action);
-void scanDevices();
-void readRS485();
+
+template <class T>
+void scanDevices(T protocol);
+
+template <class T>
+void readRS485(T protocol);
+
 bool waitReceiveRS485(bool attemptsController, uint8_t timeOut);
 void masterReset();
 
+template <class T>
+void process(T protocol);
 
 void setup(){
 	Serial.begin(115200);
+	WiFi.softAP(DEVICE_ID, PASSWORD);
+	server.begin();
 	RS485.begin(1000000, SERIAL_8N1, 16, 17);
 
 	pinMode(TRANSMITER_PIN, OUTPUT);
@@ -48,53 +64,78 @@ void setup(){
 
 	digitalWrite(TRANSMITER_PIN, LOW);
 	digitalWrite(LED_TRANSMITER_PIN, LOW);
+	
 }
 
 void loop(){
-	
-	if(Serial.available() > 0){
-		StaticJsonDocument<200> doc;
-		DeserializationError error = deserializeJson(doc, Serial);
+	client = server.available();
 
-		if(error){
-			Serial.println(error.c_str());
-		}else{
-			const uint8_t action = doc["action"]; //action
-			
-			switch (action){
-				//set configuration in slave
-				case 1:
-					{
-						doc["action"] = 2;
-						transmitter(doc);
-						
-						if(waitReceiveRS485(false, 50)){
-							readRS485();
-						}
-					}
-					break;
+	if(client){
+		/*
+		* Operation mode: Wifi (TCP)
+		*/
+		while(client.connected()){
+			if(client.available() > 0){
 
-				//get slaves online
-				case 2:
-					scanDevices();
-					break;
+			}
+			/*
+			*	Routine operation
+			*/
+			process(client);
+		}
+	}else{
+		/*
+		* Operation mode : Serial
+		*/
+		if(Serial.available() > 0){
+			StaticJsonDocument<200> doc;
+			DeserializationError error = deserializeJson(doc, Serial);
+
+			if(error){
+				Serial.println(error.c_str());
+			}else{
+				const uint8_t action = doc["action"]; //action
 				
-				//Master reset
-				case 3:
-					masterReset();
-					break;
+				switch (action){
+					//set configuration in slave
+					case 1:
+						{
+							doc["action"] = 2;
+							transmitter(doc);
+							
+							if(waitReceiveRS485(false, 50)){
+								readRS485(Serial);
+							}
+						}
+						break;
 
-				default:
-					break;
+					//get slaves online
+					case 2:
+						scanDevices(Serial);
+						break;
+					
+					//Master reset
+					case 3:
+						masterReset();
+						break;
+
+					default:
+						break;
+				}
 			}
 		}
-	}
-	
-	/*
-	*	Routine operation
-	*/
+		/*
+		*	Routine operation
+		*/
+		process(Serial);
+	}	
+}
+
+template <class T>
+void process(T protocol){
 	if(DEVICES_ONLINE == 0){
-		scanDevices();
+		scanDevices(protocol);
+
 		delay(1000);
 	}else{
 		for(uint8_t i = 0; i < DEVICES_ONLINE;i++){
@@ -103,22 +144,23 @@ void loop(){
 
 			if(waitReceiveRS485(true, TIME_OUT)){
 				//reading the slaves' data
-				readRS485();
+				readRS485(Serial);
 			}else{
 				if(attempts >= MAX_ATTEMPTS){
-					scanDevices();
+					scanDevices(protocol);
 				}
 			}
 		}
 	}
 }
 
-void readRS485(){
+template <class T>
+void readRS485(T protocol){
 	
 	StaticJsonDocument<200> doc;
 	DeserializationError error = deserializeJson(doc, RS485);	
 	if (error){
-		Serial.println(error.c_str());
+		protocol.println(error.c_str());
 	}
 	else{
 		unsigned long PING = millis() - timeTransmiter;
@@ -132,9 +174,9 @@ void readRS485(){
 			doc["sensor"] = sensor;
 			doc["ping"] = PING;
 
-			serializeJson(doc, Serial);
-			Serial.write('\n');
-			Serial.flush();
+			serializeJson(doc, protocol);
+			protocol.write('\n');
+			protocol.flush();
 		}
 	}	
 }
@@ -152,7 +194,8 @@ bool waitReceiveRS485(bool attemptsController, uint8_t timeOut){
 	return received;
 }
 
-void scanDevices(){
+template <class T>
+void scanDevices(T protocol){
 	uint8_t index = 0;
 	
 	DEVICES_ONLINE = 0;
@@ -177,7 +220,7 @@ void scanDevices(){
 			DeserializationError error = deserializeJson(doc, RS485);
 
 			if (error){
-				Serial.println(error.c_str());
+				protocol.println(error.c_str());
 			}
 			else{
 				JsonObject obj = doc.as<JsonObject>();
@@ -193,9 +236,9 @@ void scanDevices(){
 
 	}
 
-	serializeJson(response, Serial);
-	Serial.write('\n');
-	Serial.flush();
+	serializeJson(response, protocol);
+	protocol.write('\n');
+	protocol.flush();
 }
 
 void transmitter(char* addressee, uint8_t action){

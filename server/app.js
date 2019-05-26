@@ -9,8 +9,12 @@ const logger = require('morgan');
 const cors = require('cors');
 
 const mongoose = require('mongoose');
+const network = require('network');
 
-
+let ip = "";
+network.get_gateway_ip(($err, $ip) => {
+    ip = $ip;
+});
 
 /*
 * DB Connection
@@ -42,7 +46,12 @@ if (process.env.NODE_ENV == 'development') {
     app.use(logger('dev'));
 }
 
-app.use(function (req, res, next) {
+
+app.use((req, res, next) => {
+    res.ip = ip;
+    next();
+});
+app.use((req, res, next) => {
     res.io = io;
     next();
 });

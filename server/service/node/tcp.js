@@ -39,7 +39,7 @@ const functions = require('./functions');
 * Connection and Parser
 */
 const client = new net.Socket();
-const line = readline.createInterface(client, client);
+const lineparser = readline.createInterface(client, client);
 
 
 client.connect(80, IPGateway.gateway, () => {
@@ -47,7 +47,7 @@ client.connect(80, IPGateway.gateway, () => {
 });
 
 
-line.on('line', ($line) => {
+lineparser.on('line', ($line) => {
     try{
         line = JSON.parse($line);
     }catch(e){
@@ -73,10 +73,10 @@ socket.on('action', (msg) => {
     switch(msg.action){
         case 1:
             msg.message["action"] = 1;
-            port.write(JSON.stringify(msg.message));
+            client.write(JSON.stringify(msg.message));
             break;
         case 2:
-            port.write(functions.requestFunction(2));
+            client.write(functions.requestFunction(2));
             break;
     }
 });

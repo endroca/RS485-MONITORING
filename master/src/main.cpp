@@ -53,9 +53,12 @@ void masterReset();
 template <class T>
 void process(T protocol);
 
+template <class T>
+void setting(T protocol);
+
 void setup(){
 	Serial.begin(115200);
-	WiFi.softAP(DEVICE_ID, PASSWORD);
+	WiFi.softAP("RS485", "ifes");
 	server.begin();
 	RS485.begin(1000000, SERIAL_8N1, 16, 17);
 
@@ -76,7 +79,7 @@ void loop(){
 		*/
 		while(client.connected()){
 			if(client.available() > 0){
-
+				setting(client);
 			}
 			/*
 			*	Routine operation
@@ -88,47 +91,52 @@ void loop(){
 		* Operation mode : Serial
 		*/
 		if(Serial.available() > 0){
-			StaticJsonDocument<200> doc;
-			DeserializationError error = deserializeJson(doc, Serial);
-
-			if(error){
-				Serial.println(error.c_str());
-			}else{
-				const uint8_t action = doc["action"]; //action
-				
-				switch (action){
-					//set configuration in slave
-					case 1:
-						{
-							doc["action"] = 2;
-							transmitter(doc);
-							
-							if(waitReceiveRS485(false, 50)){
-								readRS485(Serial);
-							}
-						}
-						break;
-
-					//get slaves online
-					case 2:
-						scanDevices(Serial);
-						break;
-					
-					//Master reset
-					case 3:
-						masterReset();
-						break;
-
-					default:
-						break;
-				}
-			}
+			setting(Serial);
 		}
 		/*
 		*	Routine operation
 		*/
 		process(Serial);
 	}	
+}
+
+template <class T>
+void setting(T protocol){
+	StaticJsonDocument<200> doc;
+	DeserializationError error = deserializeJson(doc, protocol);
+
+	if(error){
+		protocol.println(error.c_str());
+	}else{
+		const uint8_t action = doc["action"]; //action
+		
+		switch (action){
+			//set configuration in slave
+			case 1:
+				{
+					doc["action"] = 2;
+					transmitter(doc);
+					
+					if(waitReceiveRS485(false, 50)){
+						readRS485(protocol);
+					}
+				}
+				break;
+
+			//get slaves online
+			case 2:
+				scanDevices(protocol);
+				break;
+			
+			//Master reset
+			case 3:
+				masterReset();
+				break;
+				
+			default:
+				break;
+		}
+	}
 }
 
 template <class T>
@@ -144,7 +152,7 @@ void process(T protocol){
 
 			if(waitReceiveRS485(true, TIME_OUT)){
 				//reading the slaves' data
-				readRS485(Serial);
+				readRS485(protocol);
 			}else{
 				if(attempts >= MAX_ATTEMPTS){
 					scanDevices(protocol);

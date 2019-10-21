@@ -1,5 +1,12 @@
 ## RS485 - Monitor
 
+![1](dependencies/1.jpg?raw=true "1")
+
+![2](dependencies/2.jpg?raw=true "1")
+
+
+
+
 **Comunicação mestre-escravo para leitura dos sensores**
 
  1. Listagem dos escravos presentes no barramento
